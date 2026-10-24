@@ -1,0 +1,8 @@
+Metadata-Version: 2.1
+Name: latency-study
+Version: 0.1.0
+Summary: Actuation latency tolerance of trajectory-tracking controllers
+Requires-Python: >=3.7
+Provides-Extra: dev
+Provides-Extra: record
+License-File: LICENSE

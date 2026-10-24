@@ -1,0 +1,42 @@
+# All experimental parameters. Nothing is hard-coded in the source.
+reference: data/selftest_reference.txt
+host: 127.0.0.1
+port: 2000
+render: false
+
+controllers: [pid, pure_pursuit, stanley, mpc]
+
+params:
+  town: Town03
+  vehicle_bp: vehicle.tesla.model3
+  dt: 0.05                # 20 Hz. Delay sweep values must be multiples of this.
+  wheelbase: 2.875        # m, measure for your chosen blueprint
+  max_steer: 0.6          # rad
+  max_accel: 3.0          # m/s^2
+  max_yaw_rate: 1.2       # rad/s, MPC control limit
+  mpc_horizon: 12
+  ilqr_iters: 8
+  warmup_s: 3.0           # discarded from every run before metrics
+  off_road_m: 6.0         # distance from path counted as departure
+  max_steps: 900
+
+tuning:
+  target_cte_m: 0.15      # all four controllers matched to this at d=0
+  osc_cap_rad: auto       # 'auto' calibrates from the route; or give a number
+  osc_cap_factor: 2.0     # auto cap = this x the MEDIAN completing tuning
+  scale_factor: 2.0       # conservative = /2, aggressive = x2 on dominant gain
+  base_gains:
+    pid:           {lat_kp: 0.5, lat_ki: 0.0, lat_kd: 0.1, lon_kp: 1.0, lon_ki: 0.1, lon_kd: 0.0}
+    pure_pursuit:  {kv: 0.5, l0: 4.0, lon_kp: 1.0, lon_ki: 0.1, lon_kd: 0.0}
+    stanley:       {k: 1.0, ks: 1.0, lon_kp: 1.0, lon_ki: 0.1, lon_kd: 0.0}
+    mpc:           {w_pos: 1.0, w_vel: 0.5, w_ctrl: 0.1}
+  grid:                   # [start, stop, n] passed to np.linspace
+    pid:          {lat_kp: [0.2, 1.4, 4], lat_kd: [0.0, 0.2, 2]}
+    pure_pursuit: {kv: [0.2, 0.8, 3], l0: [3.0, 7.0, 3]}
+    stanley:      {k: [0.3, 2.5, 4], ks: [0.5, 1.5, 2]}
+    mpc:          {w_pos: [1.0, 6.0, 3], w_ctrl: [0.05, 0.2, 2]}
+
+sweep:
+  tunings: [conservative, matched, aggressive]
+  delays_ms: [0, 100, 200, 300, 400]
+  seeds: 2

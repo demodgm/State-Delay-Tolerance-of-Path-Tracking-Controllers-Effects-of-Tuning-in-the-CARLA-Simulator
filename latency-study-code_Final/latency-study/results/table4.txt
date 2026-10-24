@@ -1,0 +1,12 @@
+Table IV - budget at three tunings, and rank change
+
+Controller       conservative        matched     aggressive  Rank changes
+PID                        44            128             22             2
+Pure pursuit              217            122             58             2
+Stanley                    89             36             20             1
+MPC                        25            221            272             1
+
+Ordering tuning-invariant across the swept range: NO
+  conservative  : Pure pursuit > Stanley > PID > MPC
+  matched       : MPC > PID > Pure pursuit > Stanley
+  aggressive    : MPC > Pure pursuit > PID > Stanley

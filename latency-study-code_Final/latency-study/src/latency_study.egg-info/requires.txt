@@ -1,0 +1,10 @@
+numpy>=1.17
+pandas>=1.1
+matplotlib>=3.4
+PyYAML>=5.4
+
+[dev]
+pytest>=7.0
+
+[record]
+pygame>=2.0

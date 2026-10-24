@@ -1,0 +1,3 @@
+[console_scripts]
+latency-analyze = latency.analyze:main
+latency-sweep = latency.sweep:main

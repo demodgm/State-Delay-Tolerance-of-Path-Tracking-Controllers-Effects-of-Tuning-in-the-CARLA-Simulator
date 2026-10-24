@@ -1,0 +1,7 @@
+Table V - accuracy-for-tolerance exchange rate
+
+Controller       d CTE (m)  d budget (ms)   ms per cm
+PID                  0.190             22         1.2
+Pure pursuit         0.226            160         7.1
+Stanley              0.146             69         4.7
+MPC                  0.171           -247       -14.4

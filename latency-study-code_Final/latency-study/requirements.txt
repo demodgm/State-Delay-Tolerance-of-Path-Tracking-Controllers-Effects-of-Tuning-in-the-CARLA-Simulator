@@ -1,0 +1,11 @@
+# Oldest versions that work, so this resolves on Python 3.7 (the CARLA 0.9.15
+# cp37 client wheel) as well as on current interpreters.
+numpy>=1.17
+pandas>=1.1
+matplotlib>=3.4
+PyYAML>=5.4
+pytest>=7.0
+pygame>=2.0        # only for scripts/record_trajectory.py (incl. gamepad support)
+# carla is installed separately and must match your CARLA server version.
+# Prefer the wheel shipped with your server over the one on PyPI:
+#   pip install <CARLA>/PythonAPI/carla/dist/carla-0.9.15-cp37*.whl

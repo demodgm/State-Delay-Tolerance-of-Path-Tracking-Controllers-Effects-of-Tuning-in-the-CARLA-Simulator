@@ -1,0 +1,140 @@
+{
+  "_selftest": false,
+  "_stamp": null,
+  "target_cte_m": 0.15,
+  "controllers": {
+    "pid": {
+      "conservative": {
+        "lat_kp": 0.02,
+        "lat_ki": 0.0,
+        "lat_kd": 0.39999999999999997,
+        "lon_kp": 1.0,
+        "lon_ki": 0.1,
+        "lon_kd": 0.0
+      },
+      "matched": {
+        "lat_kp": 0.16363636363636364,
+        "lat_ki": 0.0,
+        "lat_kd": 0.0,
+        "lon_kp": 1.0,
+        "lon_ki": 0.1,
+        "lon_kd": 0.0
+      },
+      "aggressive": {
+        "lat_kp": 0.16363636363636364,
+        "lat_ki": 0.0,
+        "lat_kd": 0.6,
+        "lon_kp": 1.0,
+        "lon_ki": 0.1,
+        "lon_kd": 0.0
+      },
+      "matched_nominal_cte": 0.15401211260144124,
+      "matched_nominal_osc": 0.012619633862753644,
+      "measured_gain_directions": {
+        "lat_kp": 1,
+        "lat_kd": 1
+      },
+      "nominal_cte_by_tuning": {
+        "conservative": 0.26480623379643264,
+        "matched": 0.15401211260144124,
+        "aggressive": 0.07668815769623029
+      }
+    },
+    "pure_pursuit": {
+      "conservative": {
+        "kv": 0.23125,
+        "l0": 5.8,
+        "lon_kp": 1.0,
+        "lon_ki": 0.1,
+        "lon_kd": 0.0
+      },
+      "matched": {
+        "kv": 0.4125,
+        "l0": 1.4000000000000001,
+        "lon_kp": 1.0,
+        "lon_ki": 0.1,
+        "lon_kd": 0.0
+      },
+      "aggressive": {
+        "kv": 0.05,
+        "l0": 2.5,
+        "lon_kp": 1.0,
+        "lon_ki": 0.1,
+        "lon_kd": 0.0
+      },
+      "matched_nominal_cte": 0.1466281126602071,
+      "matched_nominal_osc": 0.007755275316441882,
+      "measured_gain_directions": {
+        "kv": -1,
+        "l0": -1
+      },
+      "nominal_cte_by_tuning": {
+        "conservative": 0.2981574780913707,
+        "matched": 0.1466281126602071,
+        "aggressive": 0.07260431415562711
+      }
+    },
+    "stanley": {
+      "conservative": {
+        "k": 1.859090909090909,
+        "ks": 3.0,
+        "lon_kp": 1.0,
+        "lon_ki": 0.1,
+        "lon_kd": 0.0
+      },
+      "matched": {
+        "k": 7.286363636363635,
+        "ks": 0.1,
+        "lon_kp": 1.0,
+        "lon_ki": 0.1,
+        "lon_kd": 0.0
+      },
+      "aggressive": {
+        "k": 10.0,
+        "ks": 0.1,
+        "lon_kp": 1.0,
+        "lon_ki": 0.1,
+        "lon_kd": 0.0
+      },
+      "matched_nominal_cte": 0.14996351303264566,
+      "matched_nominal_osc": 0.009200671711938335,
+      "measured_gain_directions": {
+        "k": 1,
+        "ks": -1
+      },
+      "nominal_cte_by_tuning": {
+        "conservative": 0.2855156474581721,
+        "matched": 0.14996351303264566,
+        "aggressive": 0.13963051125403056
+      }
+    },
+    "mpc": {
+      "conservative": {
+        "w_pos": 0.02,
+        "w_vel": 0.5,
+        "w_ctrl": 0.005
+      },
+      "matched": {
+        "w_pos": 0.02,
+        "w_vel": 0.5,
+        "w_ctrl": 0.2025
+      },
+      "aggressive": {
+        "w_pos": 0.02,
+        "w_vel": 0.5,
+        "w_ctrl": 0.30125
+      },
+      "matched_nominal_cte": 0.13373635053633043,
+      "matched_nominal_osc": 0.006359357292180277,
+      "measured_gain_directions": {
+        "w_pos": -1,
+        "w_ctrl": -1
+      },
+      "nominal_cte_by_tuning": {
+        "conservative": 0.259196792273852,
+        "matched": 0.13373635053633043,
+        "aggressive": 0.08993512472806205
+      }
+    }
+  }
+}

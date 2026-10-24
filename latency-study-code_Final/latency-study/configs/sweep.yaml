@@ -1,0 +1,53 @@
+# All experimental parameters. Nothing is hard-coded in the source.
+reference: data/reference_trajectory.txt
+host: 127.0.0.1
+port: 2000
+render: false
+
+controllers: [pid, pure_pursuit, stanley, mpc]
+
+params:
+  town: Town03
+  vehicle_bp: vehicle.tesla.model3
+  dt: 0.02                # 50 Hz. Delay is quantised to whole ticks, so this
+                          # sets the finest budget you can resolve (20 ms).
+                          # At 0.05 anything under 50 ms reads as "<50".
+  wheelbase: 2.875        # m, measure for your chosen blueprint
+  max_steer: 0.6          # rad
+  max_accel: 3.0          # m/s^2
+  max_yaw_rate: 1.2       # rad/s, MPC control limit
+  mpc_horizon: 50         # 1.0 s of preview at dt=0.02. This is what the
+                          # reported run used. 30 is about 2x faster, but it
+                          # changes the MPC's behaviour, so don't mix results
+                          # from the two.
+  ilqr_iters: 8
+  warmup_s: 3.0           # discarded from every run before metrics
+  off_road_m: 6.0         # distance from path counted as departure
+  max_steps: auto         # sized from the route length; a constant wastes most of tuning
+
+tuning:
+  target_cte_m: 0.15      # all four controllers matched to this at d=0
+  target_tolerance_m: 0.05  # warn if a controller cannot be matched this close
+  abort_cte_multiple: 10.0  # stop a candidate tracking this much worse than target
+  failure_cte_m: 0.50       # must match analyze --cte-threshold
+  conservative_headroom: 0.6  # conservative tuning must sit within this x failure_cte_m
+  osc_cap_rad: auto       # 'auto' calibrates from the route; or give a number
+  osc_cap_factor: 2.0     # auto cap = this x the MEDIAN completing tuning
+  scale_factor: 2.0       # conservative = /2, aggressive = x2 on dominant gain
+  base_gains:
+    pid:           {lat_kp: 0.5, lat_ki: 0.0, lat_kd: 0.1, lon_kp: 1.0, lon_ki: 0.1, lon_kd: 0.0}
+    pure_pursuit:  {kv: 0.5, l0: 4.0, lon_kp: 1.0, lon_ki: 0.1, lon_kd: 0.0}
+    stanley:       {k: 1.0, ks: 1.0, lon_kp: 1.0, lon_ki: 0.1, lon_kd: 0.0}
+    mpc:           {w_pos: 1.0, w_vel: 0.5, w_ctrl: 0.1}
+  grid:                   # [start, stop, n] passed to np.linspace
+    # bounds widened after a real run pinned three of four controllers
+    # against an edge; keep an eye on the "! pinned at" warnings
+    pid:          {lat_kp: [0.02, 1.6, 12], lat_kd: [0.0, 0.6, 4]}
+    pure_pursuit: {kv: [0.05, 1.5, 9], l0: [0.3, 8.0, 8]}
+    stanley:      {k: [0.05, 10.0, 12], ks: [0.1, 3.0, 5]}
+    mpc:          {w_pos: [0.02, 20.0, 10], w_ctrl: [0.005, 0.4, 5]}
+
+sweep:
+  tunings: [conservative, matched, aggressive]
+  delays_ms: [0, 20, 40, 60, 80, 120, 160, 220, 300, 400]
+  seeds: 3

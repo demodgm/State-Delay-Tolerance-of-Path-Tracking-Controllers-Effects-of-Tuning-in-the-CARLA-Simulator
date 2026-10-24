@@ -1,0 +1,13 @@
+controller,tuning,budget_ms,budget_bin_ms,budget_lo,budget_hi,method,criterion,sweep_step_ms,nominal_cte,completion,solve_ms
+mpc,aggressive,272.4,300.0,271.4,273.5,interpolated,osc,20.0,0.0917398380695747,1.0,4.855776147594011
+mpc,conservative,25.1,40.0,21.8,27.7,interpolated,osc,20.0,0.263053517510543,1.0,5.84777951594626
+mpc,matched,220.7,300.0,220.6,220.9,interpolated,both,20.0,0.13403585087484143,1.0,4.7657409712619225
+pid,aggressive,21.6,40.0,21.5,21.8,interpolated,osc,20.0,0.07660611727569594,1.0,0.0
+pid,conservative,43.5,60.0,43.2,43.7,interpolated,osc,20.0,0.26682889912541546,1.0,0.0
+pid,matched,127.6,160.0,127.5,127.7,interpolated,osc,20.0,0.15421213605322479,1.0,0.0
+pure_pursuit,aggressive,57.5,60.0,56.9,58.0,interpolated,osc,20.0,0.0726147581303652,1.0,0.0
+pure_pursuit,conservative,217.1,220.0,213.4,220.0,interpolated,osc,20.0,0.298228290259374,1.0,0.0
+pure_pursuit,matched,121.9,160.0,121.8,122.0,interpolated,osc,20.0,0.1466053984247846,1.0,0.0
+stanley,aggressive,20.3,40.0,20.3,20.3,interpolated,both,20.0,0.13956282218521301,1.0,0.0
+stanley,conservative,89.4,120.0,89.3,89.6,interpolated,osc,20.0,0.28578723220074465,1.0,0.0
+stanley,matched,35.5,40.0,31.5,40.0,interpolated,osc,20.0,0.14977290698374307,1.0,0.0

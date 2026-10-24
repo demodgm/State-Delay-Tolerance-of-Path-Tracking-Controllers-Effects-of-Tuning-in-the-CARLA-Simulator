@@ -1,0 +1,15 @@
+Table III - latency budget at matched tuning
+
+Controller       CTE d=0 (m)   Budget (ms)       +/-1SD (ms)   Bin (ms)   Criterion  Completion
+PID                    0.154         127.6           128-128        160         osc        1.00
+Pure pursuit           0.147         121.9           122-122        160         osc        1.00
+Stanley                0.150          35.5             32-40         40         osc        1.00
+MPC                    0.134         220.7           221-221        300        both        1.00
+
+NOT A LATENCY BUDGET - tracking IMPROVED with delay for: MPC
+  Delay can't improve tracking. A lag-dominated tuning is being partly cancelled by the
+  injected delay, so this number measures a mistuned controller, not its latency tolerance.
+  Re-tune (check for a gain pinned at a grid edge) before reporting these.
+
+Ordering: MPC > PID > Pure pursuit > Stanley
+All adjacent pairs separated by more than seed scatter.
