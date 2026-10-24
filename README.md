@@ -1,183 +1,160 @@
-# Actuation Latency Tolerance of Trajectory-Tracking Controllers
+# State Delay Tolerance of Path Tracking Controllers: Effects of Tuning in the CARLA Simulator
 
-Real vehicles act on stale information. This project injects controlled sensing-to-actuation delay into four trajectory-tracking controllers in the CARLA simulator, measures how much delay each one absorbs before tracking degrades or oscillation begins, and tests whether that ranking survives retuning.
+Code and data for the paper by **Efe Demir Degim**, published in *The Ember Review*, 19 October 2026.
 
-**Paper:** [PDF](paper/latency_tolerance.pdf) (preprint, [pending])
-**Author:** Efe [Surname] · **Work period:** [Month] – [Month] 2026
-**License:** MIT
+**Paper:** [The Ember Review](https://emberreview.org/articles/state-delay-tolerance-path-tracking-controllers/) · **Work period:** June 2025 – October 2026 · **Portfolio:** [demodgm.github.io](https://demodgm.github.io/) · **License:** MIT
 
-**Key finding:** [pending — one sentence with a number, from the CARLA runs]
+**Key finding:** which controller tolerates delay best depends on how it is tuned. At matched tuning, PID held up to 128 ms of delay and Stanley to 36 ms; at conservative tuning that order reversed (Stanley 89 ms, PID 44 ms). Pure pursuit was first or tied first at all three tunings.
 
 ---
 
+## In plain terms
+
+A self-driving car's steering controller always acts on slightly old information about where the car is. This study feeds four common steering controllers a deliberately delayed copy of the car's position and heading in the CARLA driving simulator, and measures how much delay each one can take before it drifts off the path or starts to weave. Each controller is tested at three tuning levels, to see whether the ranking stays the same. It doesn't.
+
 ## Research question
 
-> Does the ranking of PID, Stanley, pure pursuit and iLQR-based MPC by latency tolerance stay the same across three tuning levels: conservative, accuracy-matched and aggressive?
+Does the ranking of PID, Stanley, pure pursuit and an iLQR-based MPC by delay tolerance stay the same across three tuning levels: conservative, matched and aggressive?
 
-Controller comparisons are usually run at zero delay with a single set of gains. A latency comparison done that way cannot tell whether a controller tolerates delay because of its control law or because of how it happened to be tuned. Repeating the full delay sweep at three tuning levels separates the two.
-
-The question is falsifiable: if any pair of controllers swaps order between tuning levels by more than the experiment can resolve, latency tolerance is a property of the tuning rather than the controller, and no single ranking exists.
+Controller comparisons are usually run at zero delay with one set of gains. A delay comparison done that way cannot tell whether a controller tolerates delay because of its control law or because of how it happened to be tuned. Repeating the full delay sweep at three tuning levels separates the two.
 
 ## Results
 
-> Values marked `[XX]` have not been measured yet. Nothing in this table comes from the offline stand-in or from the predictions in `predictions/`.
+**Latency budget (ms):** the delay at which a controller first crosses either failure threshold (see [Metrics](#metrics)), interpolated between sweep points. From `results/budgets.csv`.
 
-**Latency budget (ms):** the largest injected delay at which a controller still meets both tracking criteria (see [Metrics](#metrics)). Mean ± std over [XX] seeds.
-
-| Controller | Conservative | Accuracy-matched | Aggressive |
+| Controller | Conservative | Matched | Aggressive |
 |---|---|---|---|
-| PID (lateral + longitudinal) | [XX] ± [XX] | [XX] ± [XX] | [XX] ± [XX] |
-| Stanley + PID longitudinal | [XX] ± [XX] | [XX] ± [XX] | [XX] ± [XX] |
-| Pure pursuit + PID longitudinal | [XX] ± [XX] | [XX] ± [XX] | [XX] ± [XX] |
-| MPC (iLQR, unicycle model) | [XX] ± [XX] | [XX] ± [XX] | [XX] ± [XX] |
-| **Ranking** | [XX] | [XX] | [XX] |
+| PID | 44 | 128 | 22 |
+| Pure pursuit | 217 | 122 | 58 |
+| Stanley | 89 | 36 | 20 |
+| MPC *(diagnostic only)* | 25 | 221 | 272 |
 
-Pairs that cannot be separated (budgets within one sweep step, or within seed scatter) are shown as ties (`=`) rather than ranked.
+- At **matched** tuning (all controllers set to the same accuracy at zero delay, about 0.15 m mean cross-track error), PID and pure pursuit are effectively tied (128 and 122 ms) and Stanley is far behind (36 ms).
+- At **conservative** tuning, the PID–Stanley order reverses: Stanley 89 ms, PID 44 ms.
+- **Pure pursuit** is first or tied first at every tuning.
+- **MPC is not ranked.** At matched tuning its tracking error *fell* as delay grew, which means its tuning was lag-dominated and the injected delay was partly cancelling that lag. Its numbers measure a mistuned controller, not its delay tolerance, so they are reported for diagnosis only.
 
-![Latency budget per controller across tuning levels](results/figures/latency_budget.png)
+Across the three random seeds, the budgets were 128 ms for PID, 122 ms for pure pursuit and 32–40 ms for Stanley at matched tuning, and zero-delay error varied by at most 0.001 m.
 
-*Figure: [pending — generated by `run_experiment.sh`]*
+![Tuning trade-off: nominal error against latency budget for each controller at three tunings](latency-study-code_Final/latency-study/figures/fig2_tradeoff.png)
+
+*Nominal error at zero delay against latency budget, for each controller at its three tunings. The lines cross, so the ranking depends on tuning. MPC is diagnostic only. (Figure 2 in the paper.)*
+
+Full tables are in `results/table3.txt` (matched tuning), `table4.txt` (all three tunings) and `table5.txt` (accuracy traded for delay tolerance).
 
 ## Method
 
 ### Delay injection
 
-Every control command passes through a FIFO buffer before it reaches the vehicle. CARLA runs in synchronous mode with a fixed step Δt = [XX] s, so a delay τ holds each command for d = τ / Δt steps: at step k the vehicle executes the command computed at step k − d. Delays are exact and repeatable. τ is swept from 0 to [XX] ms in steps of [XX] ms.
+The delay is applied to the **state the controller receives**, not to the actuators. Every state the simulator produces goes into a first-in, first-out buffer, and the controller reads the entry that is `n = round(d / dt)` steps old. No controller code is modified, so all four see identically constructed inputs. The harness is in `src/latency/delay.py`.
 
 ### Controllers
 
-- **PID:** separate PID loops for lateral tracking error (steering) and speed error (throttle/brake).
-- **Stanley:** Stanley lateral law (heading error plus cross-track error at the front axle), PID longitudinal.
-- **Pure pursuit:** steering toward a lookahead point on the reference path, PID longitudinal.
-- **MPC:** iLQR over a unicycle model with a [XX]-step horizon, computing steering and acceleration jointly.
+- **PID:** lateral PID on cross-track error for steering; longitudinal PID for speed.
+- **Pure pursuit:** steers toward a speed-dependent lookahead point on the path; longitudinal PID.
+- **Stanley:** heading error plus cross-track error at the front axle; longitudinal PID.
+- **MPC:** a self-contained iLQR solver over a unicycle model with a 50-step (1.0 s) horizon.
 
 ### Tuning levels
 
-Each controller is tuned three times. Gains for all twelve controller × tuning combinations are in `configs/`.
+Gains are searched on a grid at zero delay and then frozen for the whole delay sweep, so the sweep measures tolerance rather than retuning effort.
 
-- **Conservative:** [XX]
-- **Accuracy-matched:** gains chosen so all four controllers reach the same zero-delay tracking error (RMS cross-track error ≈ [XX] m)
-- **Aggressive:** [XX]
+- **Matched:** gains chosen so all four controllers reach the same zero-delay mean cross-track error (target 0.15 m).
+- **Conservative** and **aggressive:** picked from the same searched candidates, at roughly twice and half the matched error.
+
+The frozen gains for all twelve controller × tuning combinations are in `results/gains.json`.
 
 ### Metrics
 
-- **Tracking error:** RMS cross-track error over the run.
-- **Oscillation:** a run counts as oscillating when [XX] exceeds an absolute floor of [XX] m.
-- **Latency budget:** the largest τ that keeps RMS cross-track error below [XX] m with no oscillation, linearly interpolated between the last passing and the first failing sweep step.
-- **Resolvability check:** two budgets are ranked only if they differ by more than one sweep step and by more than their across-seed scatter. Otherwise the pair is reported as unresolved.
+- **Cross-track error:** distance from the vehicle to the reference path, averaged over the run.
+- **Steering oscillation:** standard deviation of the steering command after removing the low-frequency trend.
+- **Latency budget:** the first delay at which mean cross-track error exceeds **0.50 m** (about 14% of a 3.5 m lane) **or** steering oscillation exceeds **twice** its own zero-delay value, interpolated between the two sweep points that bracket the crossing. These are operational thresholds, not stability boundaries.
 
 ### Setup
 
 | | |
 |---|---|
-| Simulator | CARLA [0.9.XX], synchronous mode |
-| Map / route | Town[XX], [XX] m reference trajectory with [XX] turns |
-| Runs | 4 controllers × 3 tuning levels × [XX] delays × [XX] seeds = [XX] runs |
-| Hardware | [CPU / GPU] |
+| Simulator | CARLA 0.9.15, synchronous mode, dt = 0.02 s (50 Hz), rendering off |
+| Vehicle | `vehicle.tesla.model3`, wheelbase 2.875 m, steering limit 0.6 rad |
+| State | Simulator ground truth, so the injected delay is the only error between true and observed state |
+| Reference route | Town03, 460 m, recorded by driving manually with an analog gamepad (46 s, 2.7–48.8 km/h) |
+| Delays | 0, 20, 40, 60, 80, 120, 160, 220, 300, 400 ms |
+| Runs | 4 controllers × 3 tunings × 10 delays × 3 seeds = 360 runs |
+| Software | Python 3.7.16 |
 
 ## Repository structure
 
 ```
-.
-├── src/
-│   ├── delay_buffer.py        # FIFO command delay
-│   ├── controllers/
-│   │   ├── pid.py
-│   │   ├── stanley.py
-│   │   ├── pure_pursuit.py
-│   │   └── mpc_ilqr.py
-│   ├── metrics.py             # cross-track RMS, oscillation, budget interpolation
-│   ├── carla_runner.py        # one run: controller × tuning × delay × seed
-│   ├── standin.py             # offline kinematic stand-in (NOT real data)
-│   └── analysis.py            # budgets, resolvability check, table and figure
-├── configs/                   # gains per controller × tuning level
-├── data/                      # reference trajectory (x, y, v)
-├── results/
-│   ├── raw/                   # CARLA runs: the only source of reported numbers
-│   ├── standin/               # stand-in output, watermarked
-│   └── figures/
-├── predictions/               # pre-experiment theory predictions (not results)
-├── notebooks/
-├── paper/
-├── run_experiment.sh          # reproduces the results table end to end
-├── requirements.txt
-└── LICENSE
+latency-study-code_Final/latency-study/
+├── src/latency/
+│   ├── delay.py          # the delay-injection harness (the experimental manipulation)
+│   ├── controllers.py    # PID, pure pursuit, Stanley, MPC (iLQR)
+│   ├── metrics.py        # cross-track error, oscillation, latency-budget rule
+│   ├── runners.py        # CARLA runner and an offline kinematic stand-in
+│   ├── sweep.py          # matched tuning, then the frozen-gain delay sweep
+│   ├── analyze.py        # runs.csv -> tables and figures
+│   └── gamepad.py        # analog gamepad input for recording the route
+├── configs/sweep.yaml    # every experimental parameter
+├── data/                 # the recorded reference route
+├── results/              # gains, per-run data, budgets and tables from the reported runs
+├── figures/              # Figures 1-3 from the paper
+├── scripts/              # route recording, self-test reference, run_experiment.sh
+└── tests/                # unit tests (no CARLA needed)
 ```
 
 ## Reproducing the results
 
-### Requirements
-
-- CARLA [0.9.XX] server (Linux, GPU recommended)
-- Python [3.XX]
-- The `carla` Python package must match the server version exactly
-- All other packages are pinned in `requirements.txt`
-
-### Install
+Requirements: a CARLA 0.9.15 server listening on port 2000, Python 3.7 or newer, and the CARLA client wheel that matches your server.
 
 ```bash
-git clone https://github.com/[username]/[repo].git
-cd [repo]
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+git clone https://github.com/demodgm/State-Delay-Tolerance-of-Path-Tracking-Controllers-Effects-of-Tuning-in-the-CARLA-Simulator.git
+cd State-Delay-Tolerance-of-Path-Tracking-Controllers-Effects-of-Tuning-in-the-CARLA-Simulator/latency-study-code_Final/latency-study
+pip install -e .
+pip install <CARLA>/PythonAPI/carla/dist/carla-0.9.15-cp37*.whl
+
+bash scripts/run_experiment.sh      # tuning, delay sweep, then tables and figures
 ```
 
-### Smoke test (no CARLA needed)
-
-The stand-in replaces CARLA with a simple kinematic model so you can check the whole pipeline in a few minutes. Everything it produces is watermarked `STAND-IN — NOT REAL DATA`, written to `results/standin/`, and never read by the analysis that builds the results table.
+The reported runs are already saved in `results/`, so the tables and figures can be rebuilt without re-simulating:
 
 ```bash
-python3 src/standin.py --controller stanley --tuning accuracy_matched --delay-ms 100
+python -m latency.analyze --runs results/runs.csv --cte-threshold 0.50
 ```
 
-### Full experiment
+To check the pipeline with no CARLA server (a kinematic stand-in; its output is watermarked and is not data):
 
 ```bash
-# terminal 1: start the CARLA server
-./CarlaUE4.sh -RenderOffScreen
-
-# terminal 2: run the full sweep and analysis
-bash run_experiment.sh
+python scripts/make_selftest_reference.py
+bash scripts/run_experiment.sh --selftest
 ```
 
-This writes raw runs to `results/raw/`, latency budgets to `results/latency_budgets.csv`, and the figure to `results/figures/`. Expected runtime: [XX] h on [hardware].
-
-To rebuild the table and figure from saved runs without re-simulating:
-
-```bash
-python3 src/analysis.py --input results/raw --out results/
-```
-
-## What counts as data
-
-| Folder | Contents | Used for reported results? |
-|---|---|---|
-| `results/raw/` | CARLA simulation runs | Yes, the only source |
-| `results/standin/` | Kinematic stand-in output | No, pipeline testing only |
-| `predictions/` | Expected latency thresholds from control-theory reasoning (phase margin, crossover frequency), written before the experiments | No, comparison baseline only |
+More detail, including how to record your own route, is in [`latency-study-code_Final/latency-study/README.md`](latency-study-code_Final/latency-study/README.md).
 
 ## Limitations
 
 - Simulation only. Real actuators add jitter, saturation and dynamics that CARLA does not model.
-- Each run uses a fixed delay. Variable delay (jitter) and dropped commands are not tested.
-- One vehicle and one reference trajectory. Budgets may shift with speed profile and path curvature.
-- Conclusions cover the three tuning levels tested, not every possible tuning.
+- Ground-truth state isolates the delay, so the budgets are upper bounds on what the same controllers would tolerate with a real state estimator.
+- Each run uses a fixed delay; variable delay and dropped messages are not tested.
+- One vehicle, one route and one map. Budgets may shift with speed profile and path curvature.
+- The MPC tuning was degenerate (lag-dominated), so its results are diagnostic only.
 
 ## Citation
 
 ```bibtex
-@misc{[surname]2026latency,
-  author = {[Surname], Efe},
-  title  = {Actuation Latency Tolerance of Trajectory-Tracking Controllers},
-  year   = {2026},
-  note   = {Preprint, [arXiv ID pending]}
+@article{demirdegim2026statedelay,
+  author  = {Demir Degim, Efe},
+  title   = {State Delay Tolerance of Path Tracking Controllers: Effects of Tuning in the CARLA Simulator},
+  journal = {The Ember Review},
+  year    = {2026},
+  month   = oct,
+  url     = {https://emberreview.org/articles/state-delay-tolerance-path-tracking-controllers/}
 }
 ```
 
-## Acknowledgements
+## Acknowledgement
 
-The controller work builds on the *Techniques for Self-Driving Cars* course at the University of Bonn. The course framework itself is not included in this repository. Thanks to Nived Chebrolu for [describe his actual contribution].
+The controller implementations build on the framework from the *Techniques for Self-Driving Cars* course assignments. The course framework itself is not included in this repository.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](latency-study-code_Final/latency-study/LICENSE).
